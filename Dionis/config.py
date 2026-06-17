@@ -12,3 +12,7 @@ MINIO_SECRET_KEY = "minioadmin123"
 MINIO_BUCKET = "bird-audio"
 
 AUDIO_DIR = "data/audio"
+
+CONFIDENCE_THRESHOLD = 0.5
+
+OUTPUT_CSV = "data/report.csv"

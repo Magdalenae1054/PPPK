@@ -1,0 +1,50 @@
+# Snakefile - orkestracija Dionis pipelinea
+# Pokreće 4 koraka redom: scraping -> upload -> klasifikacija -> izvjesce
+# Pokretanje:  snakemake --cores 1
+# Ciscenje:    snakemake clean --cores 1
+
+# Opcionalni fuzzy parametar: snakemake --cores 1 --config fuzzy="nightingale"
+FUZZY = config.get("fuzzy", "")
+
+
+MARKER_DIR = ".markers"
+
+rule all:
+    # Krajnji cilj pipelinea - finalni CSV izvjestaj
+    input:
+        "data/report.csv"
+
+rule scrape_taxonomy:
+    output:
+        touch(f"{MARKER_DIR}/scrape.done")
+    shell:
+        "python scripts/scrape_taxonomy.py"
+
+rule upload_audio:
+    input:
+        f"{MARKER_DIR}/scrape.done"
+    output:
+        touch(f"{MARKER_DIR}/upload.done")
+    shell:
+        "python scripts/upload_audio.py"
+
+rule classify_audio:
+    input:
+        f"{MARKER_DIR}/upload.done"
+    output:
+        touch(f"{MARKER_DIR}/classify.done")
+    shell:
+        "python scripts/classify_audio.py"
+
+rule generate_report:
+    input:
+        f"{MARKER_DIR}/classify.done"
+    output:
+        "data/report.csv"
+    run:
+        fuzzy_arg = f' --fuzzy "{FUZZY}"' if FUZZY else ""
+        shell(f"python scripts/generate_report.py{fuzzy_arg}")
+
+rule clean:
+    shell:
+        "python -c \"import shutil, os; shutil.rmtree('.markers', ignore_errors=True); os.path.exists('data/report.csv') and os.remove('data/report.csv')\""
